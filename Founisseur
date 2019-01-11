@@ -1,0 +1,130 @@
+Imports System
+Imports System.Data.OleDb
+Imports System.IO
+
+Public Class Form1
+    'evenements fait au chargement de la form1
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Dim strRequete = "Select produit.nom from produit"
+        load_CB(strRequete, CBproduit)
+        CBproduit.SelectedIndex = 0
+        strRequete = "Select distinct fournisseur.ville from fournisseur"
+        load_CB(strRequete, CBville)
+    End Sub
+
+    Private Sub load_CB(strRequete As String, CBname As System.Windows.Forms.ComboBox)
+        ' Procedure qui remplit un ComboBox
+        Dim strconnexion = "Provider=Microsoft.jet.oledb.4.0; data source=../../App_data/ComparateurPrix.mdb"
+        Try
+            Dim oConnection = New OleDbConnection(strconnexion)
+            Dim oCommand As New OleDbCommand(strRequete, oConnection)
+            oConnection.Open()
+            Dim oReader As OleDbDataReader = oCommand.ExecuteReader()
+            Do
+                While (oReader.Read())
+                    CBname.Items.Add(oReader.GetValue(0))
+                End While
+            Loop While (oReader.NextResult())
+            oReader.Close()
+            oConnection.Close()
+        Catch ex As Exception
+            MsgBox(ex.Message)
+        End Try
+    End Sub
+
+    Private Sub BTNChercher_Click(sender As Object, e As EventArgs) Handles BTNChercher.Click
+        Dim strconnexion = "Provider=Microsoft.jet.oledb.4.0; data source=../../App_data/ComparateurPrix.mdb"
+        Dim strRequete As String
+
+        Dim NBCommandetrouve = 0, NbCommandeAjoute = 0, Total = 0, PrixUnitaire As Integer, QuatiteEnStock = 0
+        LSTfournisseur.Items.Clear()
+        LSTquantite.Items.Clear()
+
+        If CBville.SelectedIndex = -1 Then
+            strRequete = "Select fournisseur.nom,prix.stock,prix.prix from fournisseur,prix,produit where produit.produitid=prix.produitid and prix.fournisseurid=fournisseur.fournisseurid and produit.nom= '" & CBproduit.SelectedItem & "' Order by prix.prix "
+        Else
+            strRequete = "Select fournisseur.nom,prix.stock,prix.prix from fournisseur,prix,produit where produit.produitid=prix.produitid and prix.fournisseurid=fournisseur.fournisseurid and fournisseur.ville='" & CBville.SelectedItem & "' and produit.nom= '" & CBproduit.SelectedItem & "' Order by prix.prix"
+        End If
+
+
+        Try
+            Dim oConnection = New OleDbConnection(strconnexion)
+            Dim oCommand As New OleDbCommand(strRequete, oConnection)
+            oConnection.Open()
+            Dim oReader As OleDbDataReader = oCommand.ExecuteReader()
+            Do
+                While (oReader.Read())
+
+                    If TBquantite.Text = "" Then
+                        LSTfournisseur.Items.Add(oReader.GetValue(0))
+                        QuatiteEnStock = oReader.GetValue(1)
+                        LSTquantite.Items.Add(QuatiteEnStock)
+                        PrixUnitaire = oReader.GetValue(2)
+
+                    Else
+                        NBCommandetrouve += oReader.GetInt32(1)
+                        If NBCommandetrouve + NbCommandeAjoute >= Val(TBquantite.Text) Then
+                            LSTfournisseur.Items.Add(oReader.GetValue(0))
+                            QuatiteEnStock = Val(TBquantite.Text) - NbCommandeAjoute
+                            LSTquantite.Items.Add(QuatiteEnStock)
+                            PrixUnitaire = oReader.GetValue(2)
+                            Total += QuatiteEnStock * PrixUnitaire
+                            Exit While
+
+                        Else
+                            LSTfournisseur.Items.Add(oReader.GetValue(0))
+                            LSTquantite.Items.Add(NBCommandetrouve)
+                            NbCommandeAjoute += NBCommandetrouve
+                            QuatiteEnStock = NBCommandetrouve
+                            PrixUnitaire = oReader.GetValue(2)
+                        End If
+
+                    End If
+                    Total += QuatiteEnStock * PrixUnitaire
+                End While
+            Loop While (oReader.NextResult())
+            oReader.Close()
+            oConnection.Close()
+        Catch ex As Exception
+            MsgBox(ex.Message)
+        End Try
+        If LSTfournisseur.Items.Count = 0 Then
+            CBville.SelectedIndex = -1
+            BTNChercher_Click(sender, e)
+        End If
+        LBLprix.Text = Total.ToString + " dhs"
+    End Sub
+    Private Sub Form1_CLosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        Dim rep = MsgBox("Voulez-vous vraiment quitter?", vbYesNo + vbQuestion + vbDefaultButton2, "Confirmation")
+        If rep = vbNo Then
+            e.cancel = True
+
+        End If
+        ' Le code de ce evenement incomplet
+    End Sub
+
+    Private Sub BTNcommander_Click(sender As Object, e As EventArgs) Handles BTNcommander.Click
+        Dim STRrequete = "update   "
+        Dim strconnexion = "Provider=Microsoft.jet.oledb.4.0; data source=../../App_data/ComparateurPrix.mdb"
+        Try
+            Dim oConnection = New OleDbConnection(strconnexion)
+            Dim oCommand As New OleDbCommand(strRequete, oConnection)
+            oConnection.Open()
+            oCommand.ExecuteNonQuery()
+            oConnection.Close()
+        Catch ex As Exception
+            MsgBox(ex.Message)
+        End Try
+        MsgBox("commande éxecuté")
+        LSTfournisseur.Items.Clear()
+        LSTquantite.Items.Clear()
+    End Sub
+
+    Private Sub BtnQuitter_Click(sender As Object, e As EventArgs) Handles BtnQuitter.Click
+        Dim rep = MsgBox("Voulez-vous vraiment quitter?", vbYesNo + vbQuestion + vbDefaultButton2, "Confirmation")
+        If vbYes Then
+            End
+        End If
+    End Sub
+
+End Class
