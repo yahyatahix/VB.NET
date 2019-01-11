@@ -1,0 +1,48 @@
+Imports System.ComponentModel
+Imports System.Data
+Imports System.Data.OleDb
+
+Public Class Form1
+    Dim oConnection As OleDbConnection
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Dim strConnexion As String = "Provider=Microsoft.Jet.OLEDB.4.0; Data Source= ../../CoucouFolder/Northwind.mdb"
+
+        Try
+            oConnection = New OleDbConnection(strConnexion)
+            oConnection.Open()
+        Catch ex As Exception
+            MsgBox("L'erreur suivante a été rencontrée :" & ex.Message)
+        End Try
+
+    End Sub
+
+    Private Sub Form1_Closing(sender As Object, e As CancelEventArgs) Handles Me.Closing
+        oConnection.Close()
+    End Sub
+
+    Private Sub btnInsert_Click(sender As Object, e As EventArgs) Handles btnInsert.Click
+        Dim id As Integer
+        Dim nom As String
+        Dim phone As String
+        Dim strRequete As String
+
+        id = CInt(txtId.Text)
+        nom = txtNom.Text
+        phone = txtPhone.Text
+
+        strRequete = "INSERT INTO Shippers(ShipperID, CompanyName, Phone) VALUES (" & CStr(id) & ",'" & nom & "', '" & phone & "')"
+        Dim oCommand As New OleDbCommand(strRequete, oConnection)
+        Try
+            oCommand.ExecuteNonQuery()
+        Catch ex As Exception
+            MsgBox("L'erreur suivante a été rencontrée :" & ex.Message)
+        End Try
+        txtPhone.Clear()
+        txtNom.Clear()
+        txtId.Clear()
+
+        MsgBox("coucou reu")
+
+
+    End Sub
+End Class
