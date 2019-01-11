@@ -1,0 +1,55 @@
+Imports System
+Imports System.Data.OleDb
+Imports System.IO
+Public Class Form1
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        'evenement du chargement
+        'on peut utiliser des procedures qu'on définit par Private Sub nomProcedure_load(strRequete As String, nomObjet As Objet)
+        'ou bien se connecter à la base tout simplement 
+        Dim strconnexion = "Provider=Microsoft.jet.oledb.4.0; data source=../../App_data/nomBASE.mdb"
+        
+        Try
+            Dim oConnections As OleDbConnection = New OleDbConnection(strconnexion)
+
+            oConnections.Open()
+            
+            'oConnections.Close() voir form1_closing
+        Catch ex As Exception
+            MsgBox(ex.Message)
+        End Try
+    End Sub
+    Private Sub nomProcedure_load(strRequete As String, nomObjet As Objet)
+        Dim strconnexion = "Provider=Microsoft.jet.oledb.4.0; data source=../../App_data/nomBASE.mdb"
+        Dim strRequete As String
+        strRequete = "Select  from  "
+        Try
+            Dim oConnections As OleDbConnection = New OleDbConnection(strConnexion)
+            Dim oCommand As New OleDbCommand(strRequete, oConnections)
+            oConnections.Open()
+            Dim oReader As OleDbDataReader = oCommand.ExecuteReader()
+
+            While (oReader.Read())
+                nomObjet.Items.Add(oReader.GetValue(0))
+
+            End While
+            oReader.Close()
+            oConnections.Close()
+        Catch ex As Exception
+            MsgBox(ex.Message)
+        End Try
+
+    End Sub
+
+    Private Sub btn_Click(sender As Object, e As EventArgs) Handles btn.Click
+        'evenement du click
+
+    End Sub
+    Private Sub Form1_CLosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        'dernier evenement avant la fermeture de la fenetre
+        oConnections.Close()
+    End Sub
+    Private Sub Form1_CLosed(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosed
+        'premier evenement après la fermeture de la fenetre 
+
+    End Sub
+End Class
